@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - $(aws ecr get-login --no-include-email)
+  build:
+    commands:
+      - echo "Started build."
+      - cd "./lib/gentoo-docker-images/"
+      - |-
+        TARGET="${TARGET}"
+        VERSION="${VERSION}"
+        ./build.sh
+      - cd "../../"
+      - echo "Finished build."
+  post_build:
+    commands:
+      - echo "Pushing a Docker image to Amazon ECR..."
+      - docker tag "gentoo/${TARGET}:latest" "${REPOSITORY_URI}/${IMAGE_REPO_NAME}:vanilla"
+      - docker push "${REPOSITORY_URI}/${IMAGE_REPO_NAME}:vanilla"
+      - echo "Completed pushing."
