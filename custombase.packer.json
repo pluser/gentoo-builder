@@ -1,0 +1,39 @@
+{
+	"variables": {
+		"repository_uri": "{{env `REPOSITORY_URI`}}",
+		"image_repo_name": "{{env `IMAGE_REPO_NAME`}}",
+		"base_image": "{{env `BASEIMAGE`}}"
+	},
+
+	"builders": [{
+		"type": "docker",
+		"image": "{{user `base_image`}}",
+		"commit": true,
+		"volumes": {
+			"/var/cache/portage-packages": "/var/cache/portage-packages",
+			"/var/cache/portage-distfiles": "/var/cache/portage-distfiles",
+			"/var/cache/portage-repos": "/var/db/repos"
+		}
+	}],
+
+	"provisioners": [{
+		"type": "shell",
+		"script": "update_portage_settings.sh"
+	}, {
+		"type": "shell",
+		"script": "install_needed_packages.sh"
+	}, {
+		"type": "file",
+		"source": "etc/repos.conf",
+		"destination": "/etc/portage/repos.conf"
+	}, {
+		"type": "shell",
+		"script": "introduce_gentoo_repository.sh"
+	}],
+
+	"post-processors": [{
+		"type": "docker-tag",
+		"repository": "{{user `repository_uri`}}/{{user `image_repo_name`}}",
+		"tag": "base"
+	}]
+}

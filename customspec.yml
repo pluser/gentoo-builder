@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing Packer..."
+      - curl -qL -o packer.zip "https://releases.hashicorp.com/packer/1.1.3/packer_1.1.3_linux_amd64.zip" && unzip packer.zip
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - $(aws ecr get-login --no-include-email)
+  build:
+    commands:
+      - echo "Started build."
+      - ./packer build -var "base_image=${REPOSITORY_URI}/${IMAGE_REPO_NAME}:vanilla" custombase.packer.json
+      - echo "Finished build."
+  post_build:
+    commands:
+      - echo "Pushing a Docker image to Amazon ECR..."
+      - docker push "${REPOSITORY_URI}/${IMAGE_REPO_NAME}:base"
+      - echo "Completed pushing."
+
+cache:
+  paths:
+    - /var/cache/portage-packages/**/*
+    - /var/cache/portage-distfiles/**/*
+    - /var/cache/portage-repos/**/*
